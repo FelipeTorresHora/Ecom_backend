@@ -1,15 +1,16 @@
 package felipe.proj.ecom.apresentacao.controller;
 
+import felipe.proj.ecom.aplicacao.service.UsuarioService;
+import felipe.proj.ecom.dominio.entidades.DTO.UsuarioDTO;
 import felipe.proj.ecom.dominio.entidades.Usuario;
-import felipe.proj.ecom.infraestrutura.seguranca.JwtFilter;
+import felipe.proj.ecom.infraestrutura.repositorio.UsuarioRepository;
+import felipe.proj.ecom.infraestrutura.seguranca.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,43 +24,40 @@ public class AuthController {
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    private JwtFilter jwtUtil;
+    private TokenService tokenService;
 
+    @Autowired
+    private UsuarioRepository repository;
 
+    @Autowired
+    private UsuarioService usuarioService;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody User user) throws Exception {
+    public ResponseEntity<LoginResponse> login(@RequestBody Usuario usuario) throws Exception {
 
-        var usernamePassword = new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword());
+        var usernamePassword = new UsernamePasswordAuthenticationToken(usuario.getUsername(), usuario.getSenha());
         Authentication auth = authenticationManager.authenticate(usernamePassword);
 
-        // Gera o token JWT
-        var token = jwtUtil.generateToken((User) auth.getPrincipal());
+        var token = tokenService.generateToken((Usuario) auth.getPrincipal());
 
         return ResponseEntity.ok(new LoginResponse(token));
     }
 
-//    @PostMapping("/register")
-//    public ResponseEntity<?> register(@RequestBody Usuario usuario) {
-//        try {
-//            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
-//        } catch (BadCredentialsException e) {
-//            throw new Exception("Usuário ou senha inválidos", e);
-//        }
-//
-//        final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUsername());
-//        final String jwt = jwtUtil.generateToken(userDetails);
-//
-//        return ResponseEntity.ok(new AuthResponse(jwt));
-//        return ResponseEntity.ok("Usuário criado com sucesso");
-//    }
-//
+    @PostMapping("/register")
+    public ResponseEntity<Usuario> register(@RequestBody UsuarioDTO usuarioDTO){
+        if (usuarioService.existeUsuario(usuarioDTO.getUsername())) {
+            return ResponseEntity.badRequest().body(null);
+        }
+
+        Usuario novoUsuario = usuarioService.criarUsuario(usuarioDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novoUsuario);
+    }
+
 //    @PostMapping("/reset-password")
 //    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
 //        // Lógica para resetar a senha com base no nome de usuário
 //        return ResponseEntity.ok("Senha resetada com sucesso");
 //    }
-
 
     public static class LoginResponse {
         private String token;

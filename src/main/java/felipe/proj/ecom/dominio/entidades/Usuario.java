@@ -1,37 +1,47 @@
 package felipe.proj.ecom.dominio.entidades;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.persistence.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 
 @Entity
 @Table(name = "usuarios")
-public class Usuario {
+public class Usuario implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column( unique = true)
     private String username;
 
-    @Column(nullable = false)
+    @Column
     private String senha;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+
     @Enumerated(EnumType.STRING)
-    @CollectionTable(name = "usuario_roles", joinColumns = @JoinColumn(name = "usuario_id"))
-    @Column(name = "role", nullable = false)
-    private Set<Role> roles;
+    @Column(name = "role")
+    private Role role;
 
     public Usuario() {}
 
-    public Usuario(Long id, String username, String senha, Set<Role> roles) {
+    public Usuario(Long id, String username, String senha, Role role) {
         this.id = id;
         this.username = username;
         this.senha = senha;
-        this.roles = roles;
+        this.role = role;
+    }
+
+    public Usuario(String login, String password, Role role){
+        this.username = username;
+        this.senha = senha;
+        this.role = role;
     }
 
     public Long getId() {
@@ -58,12 +68,42 @@ public class Usuario {
         this.senha = senha;
     }
 
-    public Set<Role> getRoles() {
-        return roles;
+    public Role getRole() {
+        return role;
     }
 
-    public void setRoles(Set<Role> roles) {
-        this.roles = roles;
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
+
+    @Override
+    public String getPassword() {
+        return senha;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return UserDetails.super.isAccountNonExpired();
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return UserDetails.super.isAccountNonLocked();
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return UserDetails.super.isCredentialsNonExpired();
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return UserDetails.super.isEnabled();
     }
 
     @Override
@@ -71,12 +111,12 @@ public class Usuario {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Usuario usuario = (Usuario) o;
-        return Objects.equals(id, usuario.id) && Objects.equals(username, usuario.username) && Objects.equals(senha, usuario.senha) && Objects.equals(roles, usuario.roles);
+        return Objects.equals(id, usuario.id) && Objects.equals(username, usuario.username) && Objects.equals(senha, usuario.senha) && role == usuario.role;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, username, senha, roles);
+        return Objects.hash(id, username, senha, role);
     }
 
     @Override
@@ -85,7 +125,9 @@ public class Usuario {
                 "id=" + id +
                 ", username='" + username + '\'' +
                 ", senha='" + senha + '\'' +
-                ", roles=" + roles +
+                ", role=" + role +
                 '}';
     }
+
+
 }

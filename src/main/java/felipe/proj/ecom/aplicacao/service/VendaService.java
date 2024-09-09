@@ -1,6 +1,5 @@
 package felipe.proj.ecom.aplicacao.service;
 
-import felipe.proj.ecom.aplicacao.dto.VendaDTO;
 import felipe.proj.ecom.dominio.entidades.ItemVenda;
 import felipe.proj.ecom.dominio.entidades.Produto;
 import felipe.proj.ecom.dominio.entidades.Venda;
@@ -31,30 +30,28 @@ public class VendaService {
 
     @Transactional
     public Venda addVenda(Venda venda) {
-        // Validar e processar a venda
-        validarVenda(venda);          // Verificar se a venda contém itens
-        processarItensVenda(venda);   // Processar todos os itens, verificando produto e estoque
-        venda.setDatavenda(LocalDateTime.now());
-        calcularValorTotal(venda);    // Calcular o valor total da venda
 
-        // Persistir a venda e seus itens
+        validarVenda(venda);
+        processarItensVenda(venda);
+        venda.setDatavenda(LocalDateTime.now());
+        calcularValorTotal(venda);
         return vendaRepository.save(venda);
     }
 
-    // Método responsável por processar os itens da venda
+
     private void processarItensVenda(Venda venda) {
         for (ItemVenda item : venda.getItens()) {
             Produto produto = produtoRepository.findById(item.getProduto().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com id: " + item.getProduto().getId()));
 
-            validarProdutoAtivo(produto);  // Verificar se o produto está ativo
-            atualizarEstoque(produto, item.getQuantidade());  // Atualizar o estoque
-            item.setProduto(produto);      // Associar o produto completo ao item
-            item.setVenda(venda);          // Associar a venda ao item
+            validarProdutoAtivo(produto);
+            atualizarEstoque(produto, item.getQuantidade());
+            item.setProduto(produto);
+            item.setVenda(venda);
         }
     }
 
-    // Método que verifica se o produto está ativo
+
     private void validarProdutoAtivo(Produto produto) {
         if (!produto.isAtivo()) {
             throw new IllegalArgumentException(
@@ -63,7 +60,7 @@ public class VendaService {
         }
     }
 
-    // Método que atualiza o estoque do produto
+
     private void atualizarEstoque(Produto produto, int quantidade) {
         if (produto.getEstoque() < quantidade) {
             throw new IllegalArgumentException("Estoque insuficiente para o produto: " + produto.getNome());
@@ -85,14 +82,13 @@ public class VendaService {
         venda.setValorTotal(valorTotal);
     }
 
-    // Método que valida se a venda tem pelo menos um produto
+
     private void validarVenda(Venda venda) {
         if (venda.getItens() == null || venda.getItens().isEmpty()) {
             throw new IllegalArgumentException("A venda deve conter pelo menos um produto.");
         }
     }
 
-    // Método para buscar todas as vendas
     public List<Venda> getAllVendas() {
         return vendaRepository.findAll();
     }

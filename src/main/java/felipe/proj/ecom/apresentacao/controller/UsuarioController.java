@@ -5,6 +5,7 @@ import felipe.proj.ecom.aplicacao.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 //import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,11 +24,15 @@ public class UsuarioController {
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<Usuario> getUsuarioByUsername(@PathVariable String username) {
-        Optional<Usuario> usuario = usuarioService.findByusername(username);
-        return usuario.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<UserDetails> getUsuarioByUsername(@PathVariable String username) {
+        UserDetails usuario = usuarioService.findByUsername(username);
+        if (usuario != null) {
+            return ResponseEntity.ok(usuario);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
+
 
 //    @PreAuthorize("hasRole('ADMIN')")
 //    @PutMapping("/{userId}/senha")
